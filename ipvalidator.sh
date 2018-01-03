@@ -83,20 +83,15 @@ esac
 }
 
 # ---------------------------------------------------------------------------------------------------------------------------------------------------------------------
-# DISPLAYS AN ERROR FOR INVALID INPUT ARGUMENT
+# REUSABLE PRINT STATEMENTS
 # ---------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 function invalid_parameter () {
 echo ""
 echo " Invalid input value \"$1\" detected at [parameter ${2}]"
-# echo 1
 usage1
 clear_and_exit1
-}	
-
-# ---------------------------------------------------------------------------------------------------------------------------------------------------------------------
-# DISPLAYS THE USAGE OF THE SCRIPT
-# ---------------------------------------------------------------------------------------------------------------------------------------------------------------------
+}
 
 function usage1 () {
 echo ""
@@ -112,6 +107,29 @@ echo "            100.100.100.1 100.100.100.0 255.255.255.252"
 echo "            8.8.8.8 8.8.0.0 16"
 echo ""
 clear_and_exit1
+}
+
+function ip_is_part () {
+echo ""
+echo " IP Address is part of the network"
+echo ""
+}
+
+function ip_is_not_part () {
+echo ""
+echo " IP Address is not part of the network"
+echo ""
+}
+
+function network_is_incorrect () {
+echo ""
+echo " Network is incorrect for the given IP"
+echo ""
+}
+
+function no_parameters_passed () {
+echo ""
+echo " Less/More/No parameters passed"
 }
 
 # ---------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -152,9 +170,7 @@ if [ $# -ne 0 ] && [ $# -eq 3 ]; then
 		fi
 	fi
 else
-	echo ""
-	echo " Less/More/No parameters passed"
-	# echo 3
+	no_parameters_passed
 	usage1
 fi
 
@@ -177,18 +193,11 @@ for loop in `seq ${1} ${2}` ; do
 	fi
 done
 if [ "${octet_match}" -eq 0 ] ; then
-	# RETURN 1
-	# echo 1
-	echo ""
-	echo " IP Address is not part of the network"
-	echo ""
+	ip_is_not_part
 	clear_and_exit1
 elif [ "${octet_match}" -eq 1 ] ; then
 	if [ "${octet}" -eq 4 ] ; then
-		echo ""
-		echo " IP Address is part of the network"
-		echo ""
-		# echo 0
+		ip_is_part
 		clear_and_exit1
 	fi
 else
@@ -200,19 +209,12 @@ fi
 for octet in `seq 1 4` ; do
 	if [ "$(echo ${subnet_mask} | cut -d "." -f${octet})" -eq 255 ] ; then
 		if [ ! "$(echo ${ip_address} | cut -d "." -f${octet})" = "$(echo ${network} | cut -d "." -f${octet})" ] ; then
-			# RETURN 1 
-			# echo 1
-			echo ""
-			echo " IP address is not part of the network"
-			echo ""
+			ip_is_not_part
 			break
 		else
 			full_mask=$((${full_mask}+1))
 			if [ "${full_mask}" -eq 4 ] ; then
-				echo ""
-				echo " IP Address is part of the network"
-				echo ""
-				# echo 0
+				ip_is_part
 				break
 			fi
 		fi
@@ -240,18 +242,12 @@ for octet in `seq 1 4` ; do
 		if [ ! "${block_begin}" -eq 300 ] ; then
 			loop_the_block ${block_begin} ${block_end}
 		else
-			# RETURN 2
-			# echo 2
-			echo ""
-			echo " Network is incorrect for the given IP"
-			echo ""
+			network_is_incorrect
 			break
 		fi
 	elif [ "$(echo ${subnet_mask} | cut -d "." -f${octet})" -eq 0 ] ; then
 			loop_the_block 0 255 ; 
 	else
-		# RETURN 3
-		# echo 3
 		echo "Duh ..."
 	fi
 done
