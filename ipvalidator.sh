@@ -178,78 +178,19 @@ fi
 ##
 ##
 
-block_size=0
-block_tub=0
-octet_match=0
-full_mask=0
-blocks[0]=0
-block_begin=300
+# echo ""
+# echo $ip_address
+# echo $network
+# echo $subnet_mask
+# echo ""
 
-function loop_the_block () {
-for loop in `seq ${1} ${2}` ; do
-	if [ "$(echo ${ip_address} | cut -d "." -f${octet})" = "${loop}" ] ; then
-		octet_match=1
-		break
-	fi
-done
-if [ "${octet_match}" -eq 0 ] ; then
-	ip_is_not_part
-	clear_and_exit1
-elif [ "${octet_match}" -eq 1 ] ; then
-	if [ "${octet}" -eq 4 ] ; then
-		ip_is_part
-		clear_and_exit1
-	fi
+IFS=. read -r ip1 ip2 ip3 ip4 <<< $ip_address
+IFS=. read -r su1 su2 su3 su4 <<< $subnet_mask
+
+if [ "$((ip1 & su1)).$((ip2 & su2)).$((ip3 & su3)).$((ip4 & su4))" == $network ]; then
+	ip_is_part
 else
-	echo "3"
-	clear_and_exit1
+	ip_is_not_part
 fi
-}
-
-for octet in `seq 1 4` ; do
-	if [ "$(echo ${subnet_mask} | cut -d "." -f${octet})" -eq 255 ] ; then
-		if [ ! "$(echo ${ip_address} | cut -d "." -f${octet})" = "$(echo ${network} | cut -d "." -f${octet})" ] ; then
-			ip_is_not_part
-			break
-		else
-			full_mask=$((${full_mask}+1))
-			if [ "${full_mask}" -eq 4 ] ; then
-				ip_is_part
-				break
-			fi
-		fi
-	elif [ "$(echo ${subnet_mask} | cut -d "." -f${octet})" -lt 255 ] && [ "$(echo ${subnet_mask} | cut -d "." -f${octet})" -gt 0 ] ; then
-		block_size=$((256-$(echo ${subnet_mask} | cut -d "." -f${octet})))
-		for (( k=1; k<256; k++ )) ; do
-			block_tub=$((${block_tub}+${block_size}))
-			if [ ! "${block_tub}" -eq 256 ] ; then
-				blocks[${k}]=${block_tub}
-			else
-				break
-			fi
-		done
-		for l in ${blocks[@]} ; do
-			if [ "$(echo ${network} | cut -d "." -f${octet})" = "${l}" ] ; then
-				block_begin=${l}
-				if [ "${block_begin}" -eq 0 ] ; then
-					block_end=$((${block_size}-1))
-				else
-					block_end=$((${block_begin}+$((${block_size}-1))))
-				fi
-				break
-			fi
-		done
-		if [ ! "${block_begin}" -eq 300 ] ; then
-			loop_the_block ${block_begin} ${block_end}
-		else
-			network_is_incorrect
-			break
-		fi
-	elif [ "$(echo ${subnet_mask} | cut -d "." -f${octet})" -eq 0 ] ; then
-			loop_the_block 0 255 ; 
-	else
-		echo "Duh ..."
-	fi
-done
 
 # END
